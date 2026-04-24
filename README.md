@@ -2,7 +2,7 @@
 
 **Author:** Diante Calhoun  
 **Course:** CIS 732 — Machine Learning and Probabilistic Models  
-**Kansas State University  
+Kansas State University  
 **Date:** Spring 2026
 
 ---
