@@ -94,7 +94,7 @@ analysis, hyperparameter tuning, and iterative model improvements.
 |-------|-----------|----------|----------|
 | Naive Baseline | ~1.12% | ~0.92% | ~0.74% |
 | Linear Regression | ~1.16% | ~0.98% | ~0.77% |
-| LSTM | ~2.41% | ~2.21% | ~2.19% |
+| LSTM | ~3.00% | ~2.87% | ~3.04% |
 
 The Naive Baseline outperformed both ML models across all three sectors,  
 consistent with the Efficient Market Hypothesis weak form. All differences  
