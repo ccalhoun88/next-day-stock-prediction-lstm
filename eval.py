@@ -176,6 +176,7 @@ def run_single_holdout(stock_data, seed):
 
     return holdout_results
 
+
 # K-Fold Evaulation
 # Needed for true data testing
 def run_kfold(stock_data, seed):
@@ -189,7 +190,7 @@ def run_kfold(stock_data, seed):
         print(f"  {stock}...", end=" ")
         X_raw = stock_data[stock][features].values
 
-        for train_idx, test_idx in tscv.split(X_raw):
+        for fold_num, (train_idx, test_idx) in enumerate(tscv.split(X_raw), start=1):
             train_raw = X_raw[train_idx]
             test_raw  = X_raw[test_idx]
 
@@ -220,7 +221,11 @@ def run_kfold(stock_data, seed):
             tf.keras.backend.clear_session()
             val_split  = int(len(X_train) * 0.8)
             lstm_model = build_lstm_model(window, n_features)
-            lstm_model.fit(
+
+            # Capture training history for one specific fold to analyze convergence behavior — only for ORCL seed 99 fold 10 to limit overhead and focus on a known convergence failure case
+            capture_history = (stock == "ORCL" and seed == 99 and fold_num == 10)
+
+            history = lstm_model.fit(
                 X_train[:val_split], y_train[:val_split],
                 validation_data=(X_train[val_split:], y_train[val_split:]),
                 epochs=epochs, batch_size=batch_size,
@@ -228,6 +233,21 @@ def run_kfold(stock_data, seed):
                            patience=patience, restore_best_weights=True)],
                 verbose=0
             )
+
+            if capture_history:
+                plt.figure(figsize=(10, 5))
+                plt.plot(history.history['loss'], label='Train MSE Loss')
+                plt.plot(history.history['val_loss'], label='Validation MSE Loss')
+                best_epoch = np.argmin(history.history['val_loss']) + 1
+                plt.axvline(x=best_epoch, color='red', linestyle='--',
+                            label=f'Best Epoch: {best_epoch}')
+                plt.title(f'LSTM Training History (Stock: {stock}, Seed: {seed}, Fold: {fold_num})')
+                plt.xlabel('Epoch')
+                plt.ylabel('MSE Loss')
+                plt.legend()
+                plt.savefig(f'./outputs/lstm_training_history_{stock}_seed{seed}_fold{fold_num}.png', dpi=150)
+                plt.close()
+
             y_pred_lstm_real = inverse_transform_target(
                 fold_scaler, lstm_model.predict(X_test, verbose=0).flatten())
             mape_lstm = np.mean(np.abs((y_test_real - y_pred_lstm_real) / y_test_real)) * 100
